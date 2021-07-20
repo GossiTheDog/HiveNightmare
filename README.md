@@ -2,9 +2,12 @@
 aka SeriousSam.  Exploit allowing you to read any registry hives as non-admin.
 
 # What is this?
-An exploit for HiveNightmare, discovered by @jonasLyk, PoC by @GossiTheDog, powered by Porgs.
+An exploit for HiveNightmare, 
 
-**Forked by @0xblacklight, and updated to include the SYSTEM and SECURITY hives**
+# Authors 
+- Discovered by @jonasLyk.
+- PoC by @GossiTheDog, powered by Porgs.
+- Additions by @0xblacklight
 
 # Scope
 Appears to work on all supported versions of Windows 10, where System Protection is enabled (should be enabled by default in most configurations).
