@@ -43,16 +43,8 @@ void main()
         }
     }
 
-    // Open the existing file, or if the file does not exist,
-    // create a new file.
 
-    hAppend = CreateFile(TEXT("SAM-haxx"), // open Two.txt
-        FILE_APPEND_DATA,         // open for writing
-        FILE_SHARE_READ,          // allow multiple readers
-        NULL,                     // no security
-        OPEN_ALWAYS,              // open or create
-        FILE_ATTRIBUTE_NORMAL,    // normal file
-        NULL);                    // no attr. template
+    hAppend = CreateFile(TEXT("SAM-haxx"), FILE_APPEND_DATA, FILE_SHARE_READ, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL); 
 
     if (hAppend == INVALID_HANDLE_VALUE)
     {
@@ -77,4 +69,6 @@ void main()
 
     CloseHandle(hFile);
     CloseHandle(hAppend);
+
+    printf("Assuming no errors, Khajiit should find wares in SAM-haxx");
 }
