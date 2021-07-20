@@ -17,6 +17,6 @@ This exploit uses VSC to extract the SAM even when in use, and saves the SAM in 
 
 # Bugs and issues
 - Currently only looks for the first four system recovery snapshots.
-- Haven't added support for dumping SECURITY, SYSTEM etc registry hives yet so I can't be bothered. 
+- Haven't added support for dumping SECURITY, SYSTEM etc registry hives yet as I can't be bothered. 
 
 ![Alt Image text](Capture.PNG?raw=true "PoC on Windows 10 21H1 as non-admin")
