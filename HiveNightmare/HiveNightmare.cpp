@@ -29,7 +29,7 @@ void main()
 
     if (hFile == INVALID_HANDLE_VALUE)
     {
-        printf("Could not open SAM :( Is System Protection not enabled or vulnerability fixed?");
+        printf("Could not open SAM :( Is System Protection not enabled or vulnerability fixed?  Note currently hardcoded to VSC snapshot 4 which may fail");
         return;
     }
 
