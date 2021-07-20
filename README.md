@@ -14,3 +14,5 @@ This file saves the SAM in current directory as SAM-haxx, for use with whatever 
 
 # Bugs and issues
 Hardcoded for snapshot #4, as this works on my PC - really, it should cycle through them all to find the latest.
+
+![Alt Image text](Capture.png?raw=true "PoC on Windows 10 21H1 as non-admin")
