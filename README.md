@@ -4,6 +4,9 @@ aka SeriousSam, or now CVE-2021–36934.  Exploit allowing you to read any regis
 # What is this?
 An zero day exploit for HiveNightmare, which allows you to retrieve all registry hives in Windows 10 as a non-administrator user.  For example, this includes hashes in SAM, which can be used to execute code as SYSTEM.
 
+# Download
+This is the direct download link for most recent version: https://github.com/GossiTheDog/HiveNightmare/raw/master/Release/HiveNightmare.exe
+
 # Authors 
 - Discovered by @jonasLyk.
 - PoC by @GossiTheDog, powered by Porgs.
