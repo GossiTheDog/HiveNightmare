@@ -13,8 +13,7 @@ This is the direct download link for most recent version: https://github.com/Gos
 - Additions by @0xblacklight, @DHerls
 
 # Scope
-Appears to work on all supported versions of Windows 10, where System Protection is enabled (should be enabled by default in most configurations).
-May not work on Windows Server
+Works on all supported versions of Windows 10, where System Protection is enabled (should be enabled by default in most configurations). 
 
 # How does this work?
 The permissions on key registry hives are set to allow all non-admin users to read the files by default, in most Windows 10 configurations.  This is an error.
