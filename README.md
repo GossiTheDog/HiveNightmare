@@ -1,13 +1,13 @@
 # HiveNightmare
-aka SeriousSam.  Exploit allowing you to read any registry hives as non-admin.
+aka SeriousSam, or now CVE-2021–36934.  Exploit allowing you to read any registry hives as non-admin.
 
 # What is this?
-An exploit for HiveNightmare, 
+An zero day exploit for HiveNightmare, which allows you to retrieve all registry hives in Windows 10 as a non-administrator user.  For example, this includes hashes in SAM, which can be used to execute code as SYSTEM.
 
 # Authors 
 - Discovered by @jonasLyk.
 - PoC by @GossiTheDog, powered by Porgs.
-- Additions by @0xblacklight
+- Additions by @0xblacklight, @DHerls
 
 # Scope
 Appears to work on all supported versions of Windows 10, where System Protection is enabled (should be enabled by default in most configurations).
@@ -30,3 +30,6 @@ python3 secretsdump.py -sam SAM-haxx -system SYSTEM-haxx -security SECURITY-haxx
 I wrote a blog: https://doublepulsar.com/hivenightmare-aka-serioussam-anybody-can-read-the-registry-in-windows-10-7a871c465fa5
 
 ![Alt Image text](Capture.PNG?raw=true "PoC on Windows 10 21H1 as non-admin")
+
+Video of exploit:
+https://www.youtube.com/watch?v=5zdIq6t3DOw
