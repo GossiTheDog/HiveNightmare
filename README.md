@@ -10,7 +10,7 @@ This is the direct download link for most recent version: https://github.com/Gos
 # Authors 
 - Discovered by @jonasLyk.
 - PoC by @GossiTheDog, powered by Porgs.
-- Additions by @0xblacklight, @DHerls
+- Additions by @0xblacklight, @DHerls, @HynekPetrak
 
 # Scope
 Works on all supported versions of Windows 10, where System Protection is enabled (should be enabled by default in most configurations). 
