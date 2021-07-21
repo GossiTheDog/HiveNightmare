@@ -26,10 +26,6 @@ This exploit uses VSC to extract the SAM, SYSTEM, and SECURITY hives even when i
 python3 secretsdump.py -sam SAM-haxx -system SYSTEM-haxx -security SECURITY-haxx LOCAL
 ```
 
-# Bugs and issues
-- ~~Currently only looks for the first four system recovery snapshots.~~
-- ~~Haven't added support for dumping SECURITY, SYSTEM etc registry hives yet as I can't be bothered.~~
-
 # More info?
 I wrote a blog: https://doublepulsar.com/hivenightmare-aka-serioussam-anybody-can-read-the-registry-in-windows-10-7a871c465fa5
 
