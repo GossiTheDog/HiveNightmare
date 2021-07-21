@@ -5,9 +5,7 @@
 // 0.1 - 20/07/2021 - Initial version
 // 0.2 - 20/07/2021 - Adds support for 4 snapshots
 // 0.3 - 20/07/2021 - merge in support for SYSTEM and SECURITY dumping, various bug fixes
-// 
-// Bugs and issues
-// - Dunno
+// 0.4 - 21/07/2021 - better code shocker :O
 
 #include <windows.h>
 #include <stdio.h>
@@ -71,7 +69,7 @@ int main(int argc, char* argv[])
         searchDepth = 4;
     }
 
-    printf("\nHiveNightmare - dump registry hives as non-admin users\n\nRunning...\n\n");
+    printf("\nHiveNightmare v0.4 - dump registry hives as non-admin users\n\nSpecify maximum number of shadows to inspect with parameter if wanted, default is 4.\n\nRunning...\n\n");
 
     HANDLE hFile;
 
@@ -114,7 +112,7 @@ int main(int argc, char* argv[])
         cout << "SYSTEM hive written out to current working directory" << endl;
     }
 
-    cout << "Assuming no errors, should be able to find hive dump files in current working directory as SAM-haxx, SECURITY-haxx and SYSTEM-haxx" << endl;
+    cout << "Assuming no errors, should be able to find hive dump files in current working directory as SAM-haxx, \nSECURITY-haxx and SYSTEM-haxx" << endl;
 
     return 0;
 }
